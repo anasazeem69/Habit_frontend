@@ -1,14 +1,18 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { AuthContext } from '../context/AuthContext';
 import ThreeDotsMenu from '../components/ThreeDotsMenu';
 
 const HomeScreen = ({ navigation }) => {
+  const { logout } = useContext(AuthContext);
+
   const handleProfile = () => {
     navigation.navigate('Profile');
   };
-  const handleLogout = () => {
-    // Implement logout logic here
-    navigation.replace('Login');
+
+  const handleLogout = async () => {
+    await logout();
+    // Navigation will be handled automatically by AppNavigator when user state changes
   };
   return (
     <View style={styles.container}>

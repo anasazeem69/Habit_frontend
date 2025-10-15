@@ -1,80 +1,194 @@
 
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+import { colors } from '../../config/colors';
 
 const LoginScreen = ({ navigation }) => {
   const { login, loading } = useContext(AuthContext);
   const [form, setForm] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
+
+    // Clear error when user starts typing
+    if (errors[key]) {
+      setErrors({ ...errors, [key]: '' });
+    }
+  };
+
+  const handleBlur = (key) => {
+    setTouched({ ...touched, [key]: true });
+    validateField(key);
+  };
+
+  const validateField = (key) => {
+    const value = form[key];
+    let error = '';
+
+    switch (key) {
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value.trim()) {
+          error = 'Email is required';
+        } else if (!emailRegex.test(value.trim())) {
+          error = 'Please enter a valid email address';
+        }
+        break;
+
+      case 'password':
+        if (!value) {
+          error = 'Password is required';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors({ ...errors, [key]: error });
+    return !error;
+  };
+
+  const validateForm = () => {
+    const fields = ['email', 'password'];
+    let isValid = true;
+
+    fields.forEach(field => {
+      if (!validateField(field)) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
   };
 
   const handleLogin = async () => {
-    setError('');
-    if (!form.email || !form.password) {
-      setError('Email and password are required');
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please fix the errors in the form before submitting.');
       return;
     }
-    const res = await login(form);
-    if (!res.success) setError(res.error);
-    else navigation.replace('Main');
+
+    try {
+      const result = await login(form);
+
+      if (result.success) {
+        // Navigation will be handled automatically by AppNavigator when user state changes
+        console.log('✅ Login successful, navigation will happen automatically');
+      } else {
+        Alert.alert('Login Failed', result.error || 'Invalid email or password.');
+      }
+    } catch (error) {
+      Alert.alert('Login Failed', error.message || 'An unexpected error occurred. Please try again.');
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Login</Text>
-      <TextInput style={styles.input} placeholder="Email" value={form.email} onChangeText={v => handleChange('email', v)} keyboardType="email-address" autoCapitalize="none" />
-      <TextInput style={styles.input} placeholder="Password" value={form.password} onChangeText={v => handleChange('password', v)} secureTextEntry />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={{ marginVertical: 12 }} />
-      ) : (
-        <Button title="Login" onPress={handleLogin} />
-      )}
-      <TouchableOpacity onPress={() => navigation.navigate('Register')} style={styles.linkContainer}>
-        <Text style={styles.link}>Don't have an account? Register</Text>
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.linkContainer}>
-        <Text style={styles.link}>Forgot Password?</Text>
-      </TouchableOpacity>
-    </View>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <View style={styles.content}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Welcome Back</Text>
+          <Text style={styles.subtitle}>Sign in to continue tracking your habits</Text>
+        </View>
+
+        <View style={styles.form}>
+          <Input
+            label="Email Address"
+            placeholder="Enter your email address"
+            value={form.email}
+            onChangeText={(value) => handleChange('email', value)}
+            onBlur={() => handleBlur('email')}
+            error={touched.email ? errors.email : ''}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+          />
+
+          <Input
+            label="Password"
+            placeholder="Enter your password"
+            value={form.password}
+            onChangeText={(value) => handleChange('password', value)}
+            onBlur={() => handleBlur('password')}
+            error={touched.password ? errors.password : ''}
+            secureTextEntry
+            showPasswordToggle
+          />
+
+          <Button
+            title="Sign In"
+            onPress={handleLogin}
+            loading={loading}
+            style={styles.loginButton}
+          />
+
+          <Button
+            title="Forgot Password?"
+            onPress={() => navigation.navigate('ForgotPassword')}
+            variant="ghost"
+            size="small"
+            style={styles.forgotPasswordLink}
+          />
+
+          <Button
+            title="Don't have an account? Create one"
+            onPress={() => navigation.navigate('Register')}
+            variant="outline"
+            style={styles.registerLink}
+          />
+        </View>
+      </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+  content: {
+    flex: 1,
     justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#fff',
+    padding: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 24,
+    color: colors.text.primary,
+    marginBottom: 6,
     textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  linkContainer: {
-    marginTop: 12,
-  },
-  link: {
-    color: '#007bff',
+  subtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
-  error: {
-    color: 'red',
+  form: {
+    width: '100%',
+  },
+  loginButton: {
+    marginTop: 6,
     marginBottom: 12,
-    textAlign: 'center',
+  },
+  forgotPasswordLink: {
+    marginBottom: 12,
+  },
+  registerLink: {
+    marginTop: 6,
   },
 });
 

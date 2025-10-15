@@ -1,7 +1,10 @@
 
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, TextInput, Button, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
+import Input from '../../components/Input';
+import Button from '../../components/Button';
+import { colors } from '../../config/colors';
 
 const RegisterScreen = ({ navigation }) => {
   const { register, loading } = useContext(AuthContext);
@@ -13,88 +16,273 @@ const RegisterScreen = ({ navigation }) => {
     confirmPassword: '',
     professional: '',
   });
-  const [error, setError] = useState('');
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
+
+    // Clear error when user starts typing
+    if (errors[key]) {
+      setErrors({ ...errors, [key]: '' });
+    }
+  };
+
+  const handleBlur = (key) => {
+    setTouched({ ...touched, [key]: true });
+    validateField(key);
+  };
+
+  const validateField = (key) => {
+    const value = form[key];
+    let error = '';
+
+    switch (key) {
+      case 'fullName':
+        if (!value.trim()) {
+          error = 'Full name is required';
+        } else if (value.trim().length < 2) {
+          error = 'Full name must be at least 2 characters';
+        } else if (value.trim().length > 50) {
+          error = 'Full name must be less than 50 characters';
+        }
+        break;
+
+      case 'phone':
+        const phoneRegex = /^\+?[\d\s\-\(\)]{10,15}$/;
+        if (!value.trim()) {
+          error = 'Phone number is required';
+        } else if (!phoneRegex.test(value.trim())) {
+          error = 'Please enter a valid phone number';
+        }
+        break;
+
+      case 'email':
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!value.trim()) {
+          error = 'Email is required';
+        } else if (!emailRegex.test(value.trim())) {
+          error = 'Please enter a valid email address';
+        }
+        break;
+
+      case 'professional':
+        if (!value.trim()) {
+          error = 'Professional field is required';
+        } else if (value.trim().length < 2) {
+          error = 'Professional field must be at least 2 characters';
+        } else if (value.trim().length > 100) {
+          error = 'Professional field must be less than 100 characters';
+        }
+        break;
+
+      case 'password':
+        if (!value) {
+          error = 'Password is required';
+        } else if (value.length < 8) {
+          error = 'Password must be at least 8 characters';
+        } else if (value.length > 20) {
+          error = 'Password must be less than 20 characters';
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(value)) {
+          error = 'Password must contain at least one uppercase letter, one lowercase letter, and one number';
+        }
+        break;
+
+      case 'confirmPassword':
+        if (!value) {
+          error = 'Please confirm your password';
+        } else if (value !== form.password) {
+          error = 'Passwords do not match';
+        }
+        break;
+
+      default:
+        break;
+    }
+
+    setErrors({ ...errors, [key]: error });
+    return !error;
+  };
+
+  const validateForm = () => {
+    const fields = ['fullName', 'phone', 'email', 'password', 'confirmPassword', 'professional'];
+    let isValid = true;
+
+    fields.forEach(field => {
+      if (!validateField(field)) {
+        isValid = false;
+      }
+    });
+
+    return isValid;
   };
 
   const handleRegister = async () => {
-    setError('');
-    console.log('Register form data:', form);
-    if (!form.fullName || !form.phone || !form.email || !form.password || !form.confirmPassword || !form.professional) {
-      setError('All fields are required');
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please fix the errors in the form before submitting.');
       return;
     }
-    if (form.password !== form.confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    const { confirmPassword, ...registerData } = form;
+
     try {
-      const res = await register(registerData);
-      console.log('Register API response:', res);
-      if (!res.success) setError(res.error);
-      else navigation.replace('Main');
-    } catch (err) {
-      console.log('Register API error:', err);
-      setError('Registration failed. See console for details.');
+      console.log('📝 RegisterScreen: Starting registration process');
+      const { confirmPassword, ...registerData } = form;
+      console.log('📝 RegisterScreen: Calling register with data:', { ...registerData, password: '***' });
+      const result = await register(registerData);
+
+      console.log('📝 RegisterScreen: Register result:', result);
+
+      if (result.success && result.requiresOTP) {
+        console.log('✅ RegisterScreen: Registration successful, navigating to OTP screen');
+        console.log('🧭 RegisterScreen: Navigation object:', navigation);
+        console.log('🧭 RegisterScreen: Navigating to OTP with params:', { email: registerData.email, isRegistration: true });
+        // Navigate to OTP screen for email verification
+        navigation.push('OTP', { email: registerData.email, isRegistration: true });
+        console.log('🧭 RegisterScreen: Navigation call completed');
+      } else if (!result.success) {
+        console.log('❌ RegisterScreen: Registration failed:', result.error);
+        Alert.alert('Registration Failed', result.error || 'An error occurred during registration.');
+      }
+    } catch (error) {
+      console.log('❌ RegisterScreen: Registration error:', error);
+      Alert.alert('Registration Failed', error.message || 'An unexpected error occurred. Please try again.');
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Register</Text>
-      <TextInput style={styles.input} placeholder="Full Name" value={form.fullName} onChangeText={v => handleChange('fullName', v)} />
-      <TextInput style={styles.input} placeholder="Phone" value={form.phone} onChangeText={v => handleChange('phone', v)} keyboardType="phone-pad" />
-      <TextInput style={styles.input} placeholder="Email" value={form.email} onChangeText={v => handleChange('email', v)} keyboardType="email-address" autoCapitalize="none" />
-      <TextInput style={styles.input} placeholder="Professional Field" value={form.professional} onChangeText={v => handleChange('professional', v)} />
-      <TextInput style={styles.input} placeholder="Password" value={form.password} onChangeText={v => handleChange('password', v)} secureTextEntry />
-      <TextInput style={styles.input} placeholder="Confirm Password" value={form.confirmPassword} onChangeText={v => handleChange('confirmPassword', v)} secureTextEntry />
-      {error ? <Text style={styles.error}>{error}</Text> : null}
-      {loading ? (
-        <ActivityIndicator size="large" color="#007bff" style={{ marginVertical: 12 }} />
-      ) : (
-        <Button title="Register" onPress={handleRegister} />
-      )}
-      <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.linkContainer}>
-        <Text style={styles.link}>Already have an account? Login</Text>
-      </TouchableOpacity>
-    </View>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.contentContainer}
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.header}>
+        <Text style={styles.title}>Create Account</Text>
+        <Text style={styles.subtitle}>Join Habit Tracker and start building better habits</Text>
+      </View>
+
+      <View style={styles.form}>
+        <Input
+          label="Full Name"
+          placeholder="Enter your full name"
+          value={form.fullName}
+          onChangeText={(value) => handleChange('fullName', value)}
+          onBlur={() => handleBlur('fullName')}
+          error={touched.fullName ? errors.fullName : ''}
+          maxLength={50}
+          autoCapitalize="words"
+        />
+
+        <Input
+          label="Phone Number"
+          placeholder="Enter your phone number"
+          value={form.phone}
+          onChangeText={(value) => handleChange('phone', value)}
+          onBlur={() => handleBlur('phone')}
+          error={touched.phone ? errors.phone : ''}
+          keyboardType="phone-pad"
+          maxLength={15}
+        />
+
+        <Input
+          label="Email Address"
+          placeholder="Enter your email address"
+          value={form.email}
+          onChangeText={(value) => handleChange('email', value)}
+          onBlur={() => handleBlur('email')}
+          error={touched.email ? errors.email : ''}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoCorrect={false}
+        />
+
+        <Input
+          label="Professional Field"
+          placeholder="e.g., Software Engineer, Doctor, Teacher"
+          value={form.professional}
+          onChangeText={(value) => handleChange('professional', value)}
+          onBlur={() => handleBlur('professional')}
+          error={touched.professional ? errors.professional : ''}
+          maxLength={100}
+          autoCapitalize="words"
+        />
+
+        <Input
+          label="Password"
+          placeholder="Create a strong password"
+          value={form.password}
+          onChangeText={(value) => handleChange('password', value)}
+          onBlur={() => handleBlur('password')}
+          error={touched.password ? errors.password : ''}
+          secureTextEntry
+          showPasswordToggle
+          maxLength={20}
+        />
+
+        <Input
+          label="Confirm Password"
+          placeholder="Confirm your password"
+          value={form.confirmPassword}
+          onChangeText={(value) => handleChange('confirmPassword', value)}
+          onBlur={() => handleBlur('confirmPassword')}
+          error={touched.confirmPassword ? errors.confirmPassword : ''}
+          secureTextEntry
+          showPasswordToggle
+          maxLength={20}
+        />
+
+        <Button
+          title="Create Account"
+          onPress={handleRegister}
+          loading={loading}
+          style={styles.registerButton}
+        />
+
+        <Button
+          title="Already have an account? Sign In"
+          onPress={() => navigation.navigate('Login')}
+          variant="ghost"
+          style={styles.loginLink}
+        />
+      </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background.primary,
+  },
+  contentContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#fff',
+    padding: 20,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 24,
   },
   title: {
-    fontSize: 32,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 24,
+    color: colors.text.primary,
+    marginBottom: 6,
     textAlign: 'center',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  linkContainer: {
-    marginTop: 12,
-  },
-  link: {
-    color: '#007bff',
+  subtitle: {
+    fontSize: 14,
+    color: colors.text.secondary,
     textAlign: 'center',
+    lineHeight: 20,
   },
-  error: {
-    color: 'red',
+  form: {
+    width: '100%',
+  },
+  registerButton: {
+    marginTop: 6,
     marginBottom: 12,
-    textAlign: 'center',
+  },
+  loginLink: {
+    marginTop: 6,
   },
 });
 
