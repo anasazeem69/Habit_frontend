@@ -1,97 +1,77 @@
-// Global color palette for the Habit Tracking App
-// Light theme with attractive, professional colors
-
+// Modern Gen Z friendly color palette
 export const colors = {
-  // Primary colors
-  primary: '#4F46E5', // Indigo - main brand color
-  primaryLight: '#6366F1', // Lighter indigo for hovers
-  primaryDark: '#3730A3', // Darker indigo for pressed states
-
+  // Primary colors - vibrant and energetic
+  primary: '#6366F1', // Indigo
+  primaryLight: '#818CF8',
+  primaryDark: '#4F46E5',
+  
   // Secondary colors
-  secondary: '#10B981', // Emerald green
-  secondaryLight: '#34D399',
-  secondaryDark: '#059669',
-
+  secondary: '#EC4899', // Pink
+  secondaryLight: '#F472B6',
+  secondaryDark: '#DB2777',
+  
   // Accent colors
-  accent: '#F59E0B', // Amber
-  accentLight: '#FCD34D',
-  accentDark: '#D97706',
-
+  accent: '#10B981', // Emerald
+  accentLight: '#34D399',
+  accentDark: '#059669',
+  
   // Neutral colors
   white: '#FFFFFF',
   black: '#000000',
-  gray: {
-    50: '#F9FAFB',
-    100: '#F3F4F6',
-    200: '#E5E7EB',
-    300: '#D1D5DB',
-    400: '#9CA3AF',
-    500: '#6B7280',
-    600: '#4B5563',
-    700: '#374151',
-    800: '#1F2937',
-    900: '#111827',
-  },
-
-  // Status colors
-  success: '#10B981', // Green
-  error: '#EF4444', // Red
-  warning: '#F59E0B', // Amber
-  info: '#3B82F6', // Blue
-
+  
   // Background colors
   background: {
-    primary: '#FFFFFF',
-    secondary: '#F9FAFB',
-    tertiary: '#F3F4F6',
+    primary: '#FAFAFA',
+    secondary: '#F8FAFC',
+    tertiary: '#F1F5F9',
+    card: '#FFFFFF',
+    modal: 'rgba(0, 0, 0, 0.5)',
+    disabled: '#F1F5F9',
   },
-
-  // Surface colors (for cards, modals, etc.)
-  surface: '#FFFFFF',
-
+  
   // Text colors
   text: {
-    primary: '#111827',
-    secondary: '#6B7280',
-    tertiary: '#9CA3AF',
+    primary: '#1E293B',
+    secondary: '#64748B',
+    tertiary: '#94A3B8',
+    placeholder: '#CBD5E1',
+    disabled: '#94A3B8',
     inverse: '#FFFFFF',
-    muted: '#9CA3AF', // Added for consistency
   },
-
+  
   // Border colors
   border: {
-    light: '#E5E7EB',
-    medium: '#D1D5DB',
-    dark: '#9CA3AF',
+    light: '#E2E8F0',
+    medium: '#CBD5E1',
+    dark: '#94A3B8',
+    focus: '#6366F1',
   },
-
+  
+  // Status colors
+  success: '#10B981',
+  warning: '#F59E0B',
+  error: '#EF4444',
+  info: '#3B82F6',
+  
+  // Social colors
+  social: {
+    google: '#DB4437',
+    facebook: '#4267B2',
+    apple: '#000000',
+  },
+  
+  // Gradient colors
+  gradients: {
+    primary: ['#6366F1', '#8B5CF6'],
+    secondary: ['#EC4899', '#F59E0B'],
+    success: ['#10B981', '#34D399'],
+    sunset: ['#F59E0B', '#EC4899'],
+  },
+  
   // Shadow colors
-  shadow: 'rgba(0, 0, 0, 0.1)',
-  shadowDark: 'rgba(0, 0, 0, 0.25)',
+  shadow: {
+    light: 'rgba(0, 0, 0, 0.05)',
+    medium: 'rgba(0, 0, 0, 0.1)',
+    dark: 'rgba(0, 0, 0, 0.2)',
+  },
 };
-
-// Export individual colors for convenience
-export const {
-  primary,
-  primaryLight,
-  primaryDark,
-  secondary,
-  secondaryLight,
-  secondaryDark,
-  accent,
-  accentLight,
-  accentDark,
-  white,
-  black,
-  gray,
-  success,
-  error,
-  warning,
-  info,
-  background,
-  surface,
-  text,
-  border,
-  shadow,
-  shadowDark,
-} = colors;

@@ -1,44 +1,34 @@
-import React, { useState, forwardRef } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { colors } from '../config/colors';
 
-const Input = forwardRef(({
+const Input = ({
   label,
   placeholder,
   value,
   onChangeText,
-  onBlur,
-  onFocus,
   error,
   secureTextEntry = false,
-  keyboardType = 'default',
-  autoCapitalize = 'none',
-  autoCorrect = false,
-  maxLength,
-  multiline = false,
-  numberOfLines = 1,
-  editable = true,
-  style,
-  inputStyle,
-  labelStyle,
-  errorStyle,
   showPasswordToggle = false,
-  leftIcon,
-  rightIcon,
-  containerStyle,
+  keyboardType = 'default',
+  autoCapitalize = 'sentences',
+  autoCorrect = true,
+  autoComplete = 'off',
+  maxLength,
+  style,
   ...props
-}, ref) => {
+}) => {
   const [isFocused, setIsFocused] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleFocus = (e) => {
     setIsFocused(true);
-    onFocus && onFocus(e);
+    if (props.onFocus) props.onFocus(e);
   };
 
   const handleBlur = (e) => {
     setIsFocused(false);
-    onBlur && onBlur(e);
+    if (props.onBlur) props.onBlur(e);
   };
 
   const togglePasswordVisibility = () => {
@@ -52,41 +42,27 @@ const Input = forwardRef(({
   };
 
   const getBackgroundColor = () => {
-    if (!editable) return colors.gray[100];
-    return colors.white;
+    if (isFocused) return colors.background.secondary;
+    return colors.background.primary;
   };
 
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View style={[styles.container, style]}>
       {label && (
-        <Text style={[styles.label, labelStyle]}>
-          {label}
-        </Text>
+        <Text style={styles.label}>{label}</Text>
       )}
-
+      
       <View style={[
         styles.inputContainer,
         {
           borderColor: getBorderColor(),
           backgroundColor: getBackgroundColor(),
-        },
-        style
+        }
       ]}>
-        {leftIcon && (
-          <View style={styles.leftIcon}>
-            {leftIcon}
-          </View>
-        )}
-
         <TextInput
-          ref={ref}
-          style={[
-            styles.input,
-            multiline && styles.multilineInput,
-            inputStyle
-          ]}
+          style={styles.input}
           placeholder={placeholder}
-          placeholderTextColor={colors.gray[400]}
+          placeholderTextColor={colors.text.placeholder}
           value={value}
           onChangeText={onChangeText}
           onFocus={handleFocus}
@@ -95,52 +71,38 @@ const Input = forwardRef(({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
+          autoComplete={autoComplete}
           maxLength={maxLength}
-          multiline={multiline}
-          numberOfLines={numberOfLines}
-          editable={editable}
+          selectionColor={colors.primary}
           {...props}
         />
-
-        {showPasswordToggle && (
+        
+        {showPasswordToggle && secureTextEntry && (
           <TouchableOpacity
-            style={styles.rightIcon}
+            style={styles.passwordToggle}
             onPress={togglePasswordVisibility}
+            activeOpacity={0.7}
           >
-            <Text style={styles.passwordToggle}>
+            <Text style={styles.passwordToggleText}>
               {showPassword ? '🙈' : '👁️'}
             </Text>
           </TouchableOpacity>
         )}
-
-        {rightIcon && !showPasswordToggle && (
-          <View style={styles.rightIcon}>
-            {rightIcon}
-          </View>
-        )}
-
-        {maxLength && (
-          <Text style={styles.charCount}>
-            {value?.length || 0}/{maxLength}
-          </Text>
-        )}
       </View>
-
+      
       {error && (
-        <Text style={[styles.error, errorStyle]}>
-          {error}
-        </Text>
+        <Text style={styles.errorText}>{error}</Text>
       )}
     </View>
   );
-});
+};
 
 const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
     color: colors.text.primary,
     marginBottom: 8,
@@ -148,52 +110,31 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    minHeight: 44,
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    borderWidth: 1.5,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    minHeight: 48,
   },
   input: {
     flex: 1,
     fontSize: 16,
     color: colors.text.primary,
-    paddingVertical: 0,
-  },
-  multilineInput: {
-    textAlignVertical: 'top',
-    minHeight: 80,
-  },
-  leftIcon: {
-    marginRight: 12,
-  },
-  rightIcon: {
-    marginLeft: 12,
+    padding: 0,
   },
   passwordToggle: {
-    fontSize: 18,
-  },
-  charCount: {
-    fontSize: 12,
-    color: colors.gray[500],
+    padding: 4,
     marginLeft: 8,
   },
-  error: {
-    fontSize: 14,
+  passwordToggleText: {
+    fontSize: 18,
+  },
+  errorText: {
+    fontSize: 12,
     color: colors.error,
     marginTop: 4,
-    fontWeight: '500',
+    marginLeft: 4,
   },
 });
-
-Input.displayName = 'Input';
 
 export default Input;

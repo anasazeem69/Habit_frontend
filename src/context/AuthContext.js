@@ -99,7 +99,6 @@ export const AuthProvider = ({ children }) => {
   }, [user, sessionExpiry]); // Only depend on user and sessionExpiry
 
   const login = async (data) => {
-    setLoading(true);
     try {
       const res = await authApi.login(data);
       console.log('🔐 AuthContext: Login successful, setting user:', res.user);
@@ -107,50 +106,41 @@ export const AuthProvider = ({ children }) => {
       setUser(res.user);
       await saveUserSession(res.user);
 
-      setLoading(false);
       console.log('✅ AuthContext: User state updated, navigation should trigger');
       return { success: true };
     } catch (err) {
       console.error('❌ AuthContext: Login failed:', err.message);
-      setLoading(false);
-      return { success: false, error: err.response?.data?.error || 'Login failed' };
+      return { success: false, error: err.message || 'Login failed' };
     }
   };
 
   const register = async (data) => {
-    setLoading(true);
     try {
       console.log('📝 AuthContext: Starting registration for:', data.email);
       const res = await authApi.register(data);
       console.log('✅ AuthContext: Registration API response:', res);
-      setLoading(false);
 
       // Return success - navigation will be handled by the calling component
       return { success: true, requiresOTP: true, email: data.email };
     } catch (err) {
       console.error('❌ AuthContext: Registration failed:', err.message);
-      setLoading(false);
-      return { success: false, error: err.response?.data?.error || 'Registration failed' };
+      return { success: false, error: err.message || 'Registration failed' };
     }
   };
 
   const requestOTP = async (email) => {
-    setLoading(true);
     try {
-      console.log('� AuthContext: Requesting OTP for:', email);
+      console.log('📧 AuthContext: Requesting OTP for:', email);
       const res = await authApi.requestOTP(email);
-      setLoading(false);
       console.log('✅ AuthContext: OTP request successful');
       return { success: true, message: res.message };
     } catch (err) {
       console.error('❌ AuthContext: OTP request failed:', err.message);
-      setLoading(false);
       return { success: false, error: err.message };
     }
   };
 
   const verifyOTP = async (email, otp, isRegistration = false) => {
-    setLoading(true);
     try {
       console.log('🔍 AuthContext: Verifying OTP for:', email, isRegistration ? '(registration)' : '(login)');
       const res = await authApi.verifyOTP(email, otp);
@@ -159,12 +149,10 @@ export const AuthProvider = ({ children }) => {
       setUser(res.user);
       await saveUserSession(res.user);
 
-      setLoading(false);
       console.log('✅ AuthContext: User state updated after OTP verification');
       return { success: true };
     } catch (err) {
       console.error('❌ AuthContext: OTP verification failed:', err.message);
-      setLoading(false);
       return { success: false, error: err.message };
     }
   };

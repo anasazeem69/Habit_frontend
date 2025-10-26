@@ -1,16 +1,16 @@
-
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert, KeyboardAvoidingView, Platform, TouchableOpacity, ScrollView } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors } from '../../config/colors';
 
 const LoginScreen = ({ navigation }) => {
-  const { login, loading } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -27,25 +27,23 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const validateField = (key) => {
-    const value = form[key];
     let error = '';
 
     switch (key) {
       case 'email':
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!value.trim()) {
+        if (!form.email.trim()) {
           error = 'Email is required';
-        } else if (!emailRegex.test(value.trim())) {
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
           error = 'Please enter a valid email address';
         }
         break;
-
       case 'password':
-        if (!value) {
+        if (!form.password) {
           error = 'Password is required';
+        } else if (form.password.length < 6) {
+          error = 'Password must be at least 6 characters';
         }
         break;
-
       default:
         break;
     }
@@ -55,24 +53,21 @@ const LoginScreen = ({ navigation }) => {
   };
 
   const validateForm = () => {
-    const fields = ['email', 'password'];
-    let isValid = true;
-
-    fields.forEach(field => {
-      if (!validateField(field)) {
-        isValid = false;
-      }
-    });
-
-    return isValid;
+    const emailValid = validateField('email');
+    const passwordValid = validateField('password');
+    
+    // Mark all fields as touched
+    setTouched({ email: true, password: true });
+    
+    return emailValid && passwordValid;
   };
 
   const handleLogin = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors in the form before submitting.');
       return;
     }
 
+    setLoading(true);
     try {
       const result = await login(form);
 
@@ -80,10 +75,14 @@ const LoginScreen = ({ navigation }) => {
         // Navigation will be handled automatically by AppNavigator when user state changes
         console.log('✅ Login successful, navigation will happen automatically');
       } else {
-        Alert.alert('Login Failed', result.error || 'Invalid email or password.');
+        // Show specific error message based on the error
+        const errorMessage = result.error || 'Login failed. Please try again.';
+        Alert.alert('Login Failed', errorMessage);
       }
     } catch (error) {
       Alert.alert('Login Failed', error.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,60 +91,65 @@ const LoginScreen = ({ navigation }) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to continue tracking your habits</Text>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Welcome Back! 👋</Text>
+            <Text style={styles.subtitle}>Sign in to your account</Text>
+          </View>
+
+          <View style={styles.form}>
+            <Input
+              label="Email"
+              placeholder="Enter your email"
+              value={form.email}
+              onChangeText={(value) => handleChange('email', value)}
+              onBlur={() => handleBlur('email')}
+              error={touched.email ? errors.email : ''}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+            />
+
+            <Input
+              label="Password"
+              placeholder="Enter your password"
+              value={form.password}
+              onChangeText={(value) => handleChange('password', value)}
+              onBlur={() => handleBlur('password')}
+              error={touched.password ? errors.password : ''}
+              secureTextEntry
+              showPasswordToggle
+            />
+
+            <TouchableOpacity
+              style={styles.forgotPassword}
+              onPress={() => navigation.navigate('ForgotPassword')}
+            >
+              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            <Button
+              title="Sign In"
+              onPress={handleLogin}
+              loading={loading}
+              style={styles.loginButton}
+            />
+
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Don't have an account? </Text>
+              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+                <Text style={styles.signupLink}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-
-        <View style={styles.form}>
-          <Input
-            label="Email Address"
-            placeholder="Enter your email address"
-            value={form.email}
-            onChangeText={(value) => handleChange('email', value)}
-            onBlur={() => handleBlur('email')}
-            error={touched.email ? errors.email : ''}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="email"
-          />
-
-          <Input
-            label="Password"
-            placeholder="Enter your password"
-            value={form.password}
-            onChangeText={(value) => handleChange('password', value)}
-            onBlur={() => handleBlur('password')}
-            error={touched.password ? errors.password : ''}
-            secureTextEntry
-            showPasswordToggle
-          />
-
-          <Button
-            title="Sign In"
-            onPress={handleLogin}
-            loading={loading}
-            style={styles.loginButton}
-          />
-
-          <Button
-            title="Forgot Password?"
-            onPress={() => navigation.navigate('ForgotPassword')}
-            variant="ghost"
-            size="small"
-            style={styles.forgotPasswordLink}
-          />
-
-          <Button
-            title="Don't have an account? Create one"
-            onPress={() => navigation.navigate('Register')}
-            variant="outline"
-            style={styles.registerLink}
-          />
-        </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -155,40 +159,60 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    minHeight: '100%',
+  },
   content: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text.primary,
-    marginBottom: 6,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 20,
   },
   form: {
     width: '100%',
   },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+  },
+  forgotPasswordText: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '500',
+  },
   loginButton: {
-    marginTop: 6,
-    marginBottom: 12,
+    marginBottom: 24,
   },
-  forgotPasswordLink: {
-    marginBottom: 12,
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  registerLink: {
-    marginTop: 6,
+  signupText: {
+    fontSize: 14,
+    color: colors.text.secondary,
+  },
+  signupLink: {
+    fontSize: 14,
+    color: colors.primary,
+    fontWeight: '600',
   },
 });
 

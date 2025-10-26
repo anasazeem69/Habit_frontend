@@ -33,14 +33,10 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
     try {
       await forgotPassword(email.trim());
-      setSuccess(true);
-      Alert.alert(
-        'Reset Email Sent',
-        'If an account with this email exists, you will receive password reset instructions.',
-        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
-      );
+      // Navigate to reset password screen with email
+      navigation.navigate('ResetPassword', { email: email.trim() });
     } catch (error) {
-      Alert.alert('Error', error.message || 'Failed to send reset email. Please try again.');
+      setError(error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }

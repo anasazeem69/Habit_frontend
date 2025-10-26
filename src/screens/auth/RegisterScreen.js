@@ -1,13 +1,13 @@
 
 import React, { useState, useContext } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { AuthContext } from '../../context/AuthContext';
 import Input from '../../components/Input';
 import Button from '../../components/Button';
 import { colors } from '../../config/colors';
 
 const RegisterScreen = ({ navigation }) => {
-  const { register, loading } = useContext(AuthContext);
+  const { register } = useContext(AuthContext);
   const [form, setForm] = useState({
     fullName: '',
     phone: '',
@@ -18,6 +18,7 @@ const RegisterScreen = ({ navigation }) => {
   });
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (key, value) => {
     setForm({ ...form, [key]: value });
@@ -123,6 +124,7 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
+    setLoading(true);
     try {
       console.log('📝 RegisterScreen: Starting registration process');
       const { confirmPassword, ...registerData } = form;
@@ -145,21 +147,28 @@ const RegisterScreen = ({ navigation }) => {
     } catch (error) {
       console.log('❌ RegisterScreen: Registration error:', error);
       Alert.alert('Registration Failed', error.message || 'An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <ScrollView
+    <KeyboardAvoidingView
       style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      keyboardShouldPersistTaps="handled"
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Create Account</Text>
-        <Text style={styles.subtitle}>Join Habit Tracker and start building better habits</Text>
-      </View>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Create Your Account</Text>
+            <Text style={styles.subtitle}>Join us and start building better habits today!</Text>
+          </View>
 
-      <View style={styles.form}>
+          <View style={styles.form}>
         <Input
           label="Full Name"
           placeholder="Enter your full name"
@@ -242,8 +251,10 @@ const RegisterScreen = ({ navigation }) => {
           variant="ghost"
           style={styles.loginLink}
         />
-      </View>
-    </ScrollView>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 };
 
@@ -252,37 +263,42 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background.primary,
   },
-  contentContainer: {
+  scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
+    minHeight: '100%',
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 32,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     color: colors.text.primary,
-    marginBottom: 6,
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 14,
+    fontSize: 16,
     color: colors.text.secondary,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 24,
   },
   form: {
     width: '100%',
   },
   registerButton: {
-    marginTop: 6,
-    marginBottom: 12,
+    marginTop: 24,
+    marginBottom: 16,
   },
   loginLink: {
-    marginTop: 6,
+    marginTop: 16,
   },
 });
 

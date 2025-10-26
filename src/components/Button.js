@@ -1,84 +1,52 @@
-import React, { forwardRef } from 'react';
+import React from 'react';
 import { TouchableOpacity, Text, ActivityIndicator, StyleSheet, View } from 'react-native';
 import { colors } from '../config/colors';
 
-const Button = forwardRef(({
+const Button = ({
   title,
   onPress,
-  variant = 'primary', // primary, secondary, outline, ghost
-  size = 'medium', // small, medium, large
-  disabled = false,
   loading = false,
-  leftIcon,
-  rightIcon,
+  disabled = false,
+  variant = 'primary',
+  size = 'medium',
   style,
   textStyle,
   ...props
-}, ref) => {
+}) => {
   const getButtonStyle = () => {
-    const baseStyle = [styles.button];
-
-    // Size styles
-    switch (size) {
-      case 'small':
-        baseStyle.push(styles.small);
-        break;
-      case 'large':
-        baseStyle.push(styles.large);
-        break;
-      default:
-        baseStyle.push(styles.medium);
+    const baseStyle = [styles.button, styles[size]];
+    
+    if (variant === 'primary') {
+      baseStyle.push(styles.primary);
+    } else if (variant === 'secondary') {
+      baseStyle.push(styles.secondary);
+    } else if (variant === 'ghost') {
+      baseStyle.push(styles.ghost);
     }
-
-    // Variant styles
-    switch (variant) {
-      case 'secondary':
-        baseStyle.push(styles.secondary);
-        break;
-      case 'outline':
-        baseStyle.push(styles.outline);
-        break;
-      case 'ghost':
-        baseStyle.push(styles.ghost);
-        break;
-      default:
-        baseStyle.push(styles.primary);
-    }
-
-    // Disabled state
+    
     if (disabled || loading) {
       baseStyle.push(styles.disabled);
     }
-
+    
     return baseStyle;
   };
 
   const getTextStyle = () => {
-    const baseStyle = [styles.text];
-
-    // Size text styles
-    switch (size) {
-      case 'small':
-        baseStyle.push(styles.smallText);
-        break;
-      case 'large':
-        baseStyle.push(styles.largeText);
-        break;
-      default:
-        baseStyle.push(styles.mediumText);
+    const baseTextStyle = [styles.text, styles[`${size}Text`]];
+    
+    if (variant === 'primary') {
+      baseTextStyle.push(styles.primaryText);
+    } else if (variant === 'secondary') {
+      baseTextStyle.push(styles.secondaryText);
+    } else if (variant === 'ghost') {
+      baseTextStyle.push(styles.ghostText);
     }
-
-    // Variant text styles
-    switch (variant) {
-      case 'outline':
-      case 'ghost':
-        baseStyle.push(styles.outlineText);
-        break;
-      default:
-        baseStyle.push(styles.primaryText);
+    
+    if (disabled || loading) {
+      baseTextStyle.push(styles.disabledText);
     }
-
-    return baseStyle;
+    
+    return baseTextStyle;
   };
 
   const handlePress = () => {
@@ -89,105 +57,72 @@ const Button = forwardRef(({
 
   return (
     <TouchableOpacity
-      ref={ref}
-      style={[...getButtonStyle(), style]}
+      style={[getButtonStyle(), style]}
       onPress={handlePress}
       disabled={disabled || loading}
       activeOpacity={0.8}
       {...props}
     >
-      <View style={styles.content}>
-        {leftIcon && !loading && (
-          <View style={styles.leftIcon}>
-            {leftIcon}
-          </View>
-        )}
-
-        {loading ? (
-          <ActivityIndicator
-            size="small"
-            color={variant === 'outline' || variant === 'ghost' ? colors.primary : colors.white}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator 
+            size="small" 
+            color={variant === 'primary' ? colors.white : colors.primary} 
           />
-        ) : (
-          <Text style={[...getTextStyle(), textStyle]}>
-            {title}
-          </Text>
-        )}
-
-        {rightIcon && !loading && (
-          <View style={styles.rightIcon}>
-            {rightIcon}
-          </View>
-        )}
-      </View>
+          <Text style={[getTextStyle(), { marginLeft: 8 }]}>Loading...</Text>
+        </View>
+      ) : (
+        <Text style={[getTextStyle(), textStyle]}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
-});
+};
 
 const styles = StyleSheet.create({
   button: {
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: colors.shadow,
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  content: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  leftIcon: {
-    marginRight: 8,
-  },
-  rightIcon: {
-    marginLeft: 8,
-  },
-
   // Sizes
   small: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    minHeight: 32,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    minHeight: 36,
   },
   medium: {
+    paddingVertical: 12,
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    minHeight: 44,
+    minHeight: 48,
   },
   large: {
-    paddingHorizontal: 28,
-    paddingVertical: 14,
-    minHeight: 52,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    minHeight: 56,
   },
-
   // Variants
   primary: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
   },
   secondary: {
-    backgroundColor: colors.secondary,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
+    backgroundColor: colors.background.secondary,
+    borderWidth: 1.5,
     borderColor: colors.primary,
   },
   ghost: {
     backgroundColor: 'transparent',
   },
-
-  // States
   disabled: {
-    opacity: 0.6,
+    backgroundColor: colors.background.disabled,
+    shadowOpacity: 0,
+    elevation: 0,
   },
-
   // Text styles
   text: {
     fontWeight: '600',
@@ -205,11 +140,20 @@ const styles = StyleSheet.create({
   primaryText: {
     color: colors.white,
   },
-  outlineText: {
+  secondaryText: {
     color: colors.primary,
   },
+  ghostText: {
+    color: colors.primary,
+  },
+  disabledText: {
+    color: colors.text.disabled,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
-
-Button.displayName = 'Button';
 
 export default Button;

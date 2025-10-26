@@ -189,6 +189,36 @@ export const verifyOTP = async (email, otp) => {
     console.error('❌ Verify OTP API error:', error.message);
     throw error;
   }
-}; 
+};
+
+export const resetPassword = async (email, newPassword) => {
+  try {
+    console.log('🔄 Reset Password API called for:', email);
+
+    if (!email || typeof email !== 'string' || !email.trim()) {
+      throw new Error('Valid email is required');
+    }
+
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
+      throw new Error('Password must be at least 8 characters long');
+    }
+
+    const response = await apiClient.post('/v1/auth/reset-password', { 
+      email: email.trim(), 
+      newPassword 
+    });
+
+    console.log('✅ Reset Password API response:', response.data);
+
+    if (!response.data) {
+      throw new Error('Invalid response from server');
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Reset Password API error:', error.message);
+    throw error;
+  }
+};
 
 
